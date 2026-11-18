@@ -1,0 +1,68 @@
+# Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Databases
+*.db
+*.sqlite3
+data/shiftyptv.db
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Frontend
+node_modules/
+dist/
+build/
+.next/
+
+# Python
+*.pyc
+*.pyo
+*.pyd
+*.nsi
+*.pyw
+
+# Distribution / packaging
+develop.egg-info/
+.eggs/
+*.egg-info/
+dist/
+build/
+*.egg
+*.spec
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nosver/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.mypy_cache/
+.mypkg/
+.pytype/
+```

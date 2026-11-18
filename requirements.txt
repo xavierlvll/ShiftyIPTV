@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+sqlalchemy
+aiosqlite
+pydantic
+httpx
+python-multipart
+jinja2
+python-dotenv
+alembic
