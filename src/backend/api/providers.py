@@ -17,6 +17,28 @@ async def create_provider(provider_in: ProviderCreate, db: AsyncSession = Depend
     await db.refresh(new_provider)
     return new_provider
 
+@router.post("/{provider_id}/import", response_model=Provider)
+async def import_m3u(provider_id: int, db: AsyncSession = Depends(get_db)):
+    # We need to fetch the provider first to get the URL
+    result = await db.execute(select(Provider).where(Provider.id == provider_id))
+    provider = result.scalar_one_or_none()
+    if not provider:
+        raise HTTPException(status_code=404, detail="Provider not found")
+    
+    service = ProviderService(db)
+    # We're assuming the URL is already set for the provider, 
+    # or we might need a different endpoint to provide the URL.
+    # For now, let's assume we are refreshing/importing based on the existing URL.
+    await service.refresh_provider(provider_id)
+    await db.refresh(provider)
+    return provider
+
+@router.post("/{provider_id}/refresh")
+async def refresh_provider(provider_id: int, db: AsyncSession = Depends(get_db)):
+    service = ProviderService(db)
+    num_channels = await service.refresh_provider(provider_id)
+    return {"message": f"Refreshed provider. {num_channels} channels processed."}
+
 @router.get("/", response_model=List[Provider])
 async def read_providers(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Provider))
