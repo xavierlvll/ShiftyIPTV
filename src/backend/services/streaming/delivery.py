@@ -31,8 +31,12 @@ class StreamDeliveryService:
                             return
 
                         async for chunk in response.aiter_bytes():
+                            # Here we would ideally parse the HLS segment and update the tracker
+                            # For now, we just pass the bytes through.
                             yield chunk
                 except Exception as e:
+                    session.error_log.append(f"Connection error: {str(e)}")
                     yield f"Stream connection failed: {str(e)}".encode()
-
+                            
+        return Response(content=stream_generator(), media_type="application/octet-stream")
         return Response(content=stream_generator(), media_type="application/octet-stream")

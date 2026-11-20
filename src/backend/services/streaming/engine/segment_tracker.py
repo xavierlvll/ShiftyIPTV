@@ -8,8 +8,9 @@ class SegmentTracker:
         self.seen_segments: Set[str] = set()
         self.last_segment_timestamp: Optional[datetime.datetime] = None
         self.history: List[str] = []
+        self.sequence_numbers: List[int] = []
 
-    def track_segment(self, segment_url: str) -> List[str]:
+    def track_segment(self, segment_url: str, sequence_number: Optional[int] = None) -> List[str]:
         """
         Tracks a new segment and returns a list of detected anomalies.
         Anomalies include: duplicate segments, missing segments (detected via sequence gap).
@@ -17,13 +18,18 @@ class SegmentTracker:
         anomalies = []
         
         if segment_url in self.seen_segments:
-            anomalies.append(f"Duplicate segment detected: {segment_url}")
+            an_msg = f"Duplicate segment detected: {segment_url}"
+            anomalies.append(an_msg)
         else:
             self.seen_segments.add(segment_url)
             self.history.append(segment_url)
             
-            # In a real implementation, we would track sequence numbers/timestamps
-            # and detect gaps here.
+            if sequence_number is not None:
+                if self.sequence_numbers and sequence_number != self.sequence_numbers[-1] + 1:
+                    gap = sequence_number - self.sequence_numbers[-1] - 1
+                    if gap > 0:
+                        anomalies.append(f"Gap detected: {gap} segments missing between {self.sequence_numbers[-1]} and {sequence_number}")
+                self.sequence_numbers.append(sequence_number)
             
         return anomalies
 
@@ -31,4 +37,5 @@ class SegmentTracker:
         """Clears the tracking history."""
         self.seen_segments.clear()
         self.history.clear()
+        self.sequence_numbers.clear()
         self.last_segment_timestamp = None

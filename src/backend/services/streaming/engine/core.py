@@ -1,20 +1,21 @@
 import asyncio
 import logging
 import httpx
-from typing import Dict, Optional, Any
+from typing import Dict, List, Optional, Any
 from src.backend.models.models import Channel
 
 logger = logging.getLogger(__name__)
 
 class StreamSession:
-    """Represents an active downstream connection to a channel."""
+    """Represents an active downstream connection to a channel with session-specific tracking."""
     def __init__(self, channel_id: int, stream_url: str):
-        self.channel_id = channel                
+        self.channel_id = channel_id
         self.stream_url = stream_url
         self.is_active = True
         self.last_segment_time = None
         self.failure_count = 0
         self.error_log: List[str] = []
+        self.start_time = asyncio.get_event_loop().time()
 
 class StreamingEngine:
     """The core engine responsible for managing HLS stream sessions and continuity."""
@@ -29,8 +30,6 @@ class StreamingEngine:
             
             session = StreamSession(channel.id, channel.stream_url)
             self.active_sessions[channel.id] = session
-            # Start background task for monitoring if needed
-            # asyncio.create_task(self._monitor_session(channel.id))
             return session
 
     async def stop_session(self, channel_id: int):
@@ -39,16 +38,8 @@ class StreamingEngine:
                 self.active_sessions[channel_id].is_active = False
                 del self.active_sessions[channel_id]
 
-    async def _monitor_session(self, channel_id: int):
-        """Background task to monitor stream health and handle recovery."""
-        # To be implemented: logic for segment monitoring and reconnection
-        pass
-
     async def handle_stream_request(self, channel_id: int, client_request: Any):
         """
         Handles an incoming HTTP request for a stream.
-        This is where the 'proxy/passthrough' or 'remuxing' logic lives.
         """
-        # Implementation will involve streaming the response from the upstream
-        # while maintaining the downstream connection.
         pass
