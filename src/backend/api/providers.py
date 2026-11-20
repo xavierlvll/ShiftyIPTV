@@ -6,6 +6,7 @@ from typing import List
 from src.backend.db.session import get_db
 from src.backend.models.models import Provider, Channel
 from src.backend.schemas.schemas import Provider, ProviderCreate
+from src.backend.services.provider_service import ProviderService
 
 router = APIRouter()
 
@@ -24,7 +25,7 @@ async def import_m3u(provider_id: int, db: AsyncSession = Depends(get_db)):
     provider = result.scalar_one_or_none()
     if not provider:
         raise HTTPException(status_code=404, detail="Provider not found")
-    
+
     service = ProviderService(db)
     # We're assuming the URL is already set for the provider, 
     # or we might need a different endpoint to provide the URL.
@@ -45,7 +46,7 @@ async def read_providers(db: AsyncSession = Depends(get_db)):
     providers = result.scalars().all()
     return providers
 
-@router.get("/{provider_id}", response_model=Provider)
+@router.get("/{provider_id}", response//_model=Provider)
 async def read_provider(provider_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Provider).where(Provider.id == provider_id))
     provider = result.scalar_one_or_none()

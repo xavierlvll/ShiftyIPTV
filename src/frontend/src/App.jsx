@@ -2,10 +2,10 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
+import ProvidersPage from './pages/Providers';
+import ChannelsPage from './pages/Channels';
 
 // Placeholder components for other routes
-const Providers = () => <div className="p-8 text-white text-2xl">Providers Page (Coming Soon)</div>;
-const Channels = () => <div className="p-8 text-white text-2xl">Channels Page (Coming Soon)</div>;
 const Monitoring = () => <div className="p-8 text-white text-2xl">Monitoring Page (Coming Soon)</div>;
 const Settings = () => <div className="p-8 text-white text-2xl">Settings Page (Coming Soon)</div>;
 
@@ -15,8 +15,8 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/providers" element={<Providers />} />
-          <Route path="/channels" element={<Channels />} />
+          <Route path="/providers" element={<ProvidersPage />} />
+          <Route path="/channels" element={<ChannelsPage />} />
           <Route path="/monitoring" element={<Monitoring />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>

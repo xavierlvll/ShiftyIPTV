@@ -1,5 +1,5 @@
-import httpx
 from fastapi import Request, Response, HTTPException
+import httpx
 from src.backend.services.streaming.engine.core import StreamingEngine, StreamSession
 from src.backend.models.models import Channel
 from src.backend.services.channel_service import ChannelService
@@ -22,17 +22,17 @@ class StreamDeliveryService:
 
         session = await self.engine.get_or_create_session(channel)
         
-        # In a real implementation, we would use a streaming response from httpx
-        # and pipe it directly to the FastAPI response.
-        
         async def stream_generator():
             async with httpx.AsyncClient(timeout=None) as client:
-                async with client.stream("GET", channel.stream_url) as response:
-                    if response.status_code != 200:
-                        yield f"Error: Upstream returned {response.status_code}".encode()
-                        return
+                try:
+                    async with client.stream("GET", channel.stream_url) as response:
+                        if response.status_code != 200:
+                            yield f"Error: Upstream returned {response.status_code}".encode()
+                            return
 
-                    async for chunk in response.aiter_bytes():
-                        yield chunk
+                        async for chunk in response.aiter_bytes():
+                            yield chunk
+                except Exception as e:
+                    yield f"Stream connection failed: {str(e)}".encode()
 
         return Response(content=stream_generator(), media_type="application/octet-stream")

@@ -41,3 +41,13 @@ export const clearStreamEvents = async (channel_id = null) => {
   const response = await apiClient.post(url);
   return response.data;
 };
+
+export const getSettings = async () => {
+  const response = await apiClient.get('/settings');
+  return response.data;
+};
+
+export const updateSettings = async (settingsData) => {
+  const response = await apiClient.put('/settings', settingsData);
+  return response.data;
+};

@@ -1,15 +1,32 @@
-import httpx
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Set
+import re
 
 class M3U8Parser:
-    """A simple parser for M3U8 (HLS) playlists."""
-    def __init__(self, content: str):
+    """A parser for M3U8 (HLS) playlists, supporting master and media playlists."""
+    def __init__(self, content: str, base_url: Optional[str] = None):
         self.content = content
+        self.base_url = base_url
         self.playlists: List[str] = []
         self.segments: List[str] = []
+        self.discontinuities: List[int] = []
         self.is_master = False
+        self.is_parsed = False
 
-    def parse(self):
+    def _resolve_url(self, url: str) -> str:
+        if not self.base_url:
+            return url
+        if url.startswith("http"):
+            return url
+        if url.startswith("/"):
+            # This is a simplification. A real implementation would handle absolute paths correctly.
+            return f"{self.base_url.rstrip('/')}{url}"
+        return f"{self.base_url.rstrip('/')}/{url.lstrip('/')}"
+
+    def parse(self) -> tuple[bool, List[str], List[str]]:
+        """Parses the playlist content and returns (is_master, playlists, segments)."""
+        if self.is_parsed:
+            return self.is_master, self.playlists, self.segments
+
         lines = self.content.splitlines()
         
         # Check if it's a master playlist
@@ -18,14 +35,14 @@ class M3U8Parser:
             for line in lines:
                 if line.startswith("http") or line.startswith("/"):
                     # For simplicity, we assume absolute URLs
-                    self.playlists.append(line.strip())
+                    self.playlists.append(self._resolve_url(line.strip()))
         else:
             self.is_master = False
             for i, line in enumerate(lines):
                 if "#EXT-X-DISCONTINUITY" in line:
                     self.discontinuities.append(i)
                 if line.startswith("http") or line.startswith("/"):
-                    self.segments.append(line.strip())
+                    self.segments.append(self._resolve_url(line.strip()))
         
+        self.is_parsed = True
         return self.is_master, self.playlists, self.segments
-

@@ -17,7 +17,7 @@ router = APIRouter()
 _engine_instance: Optional[StreamingEngine] = None
 
 async def get_engine(request: Request) -> StreamingEngine:
-    global _engineintance
+    global _engine_instance
     if _engine_instance is None:
         # In production, this would be initialized properly during app startup
         if hasattr(request.app.state, 'streaming_engine'):
