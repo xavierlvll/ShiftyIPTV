@@ -68,7 +68,7 @@ class HLSManager:
                     return
 
                 content = response.text
-                parser = M3UParser(content)
+                parser = M3UParser(content, base_url=self.media_playlist_url)
                 is_master, playlists, segments = parser.parse()
                 
                 if is_master:
@@ -99,8 +99,12 @@ class HLSManager:
                             )
                     
                     # Check for discontinuities in the media playlist
-                    # (In a real implementation, the parser should provide these)
-                    # For now, we just log that we've processed the playlist.
+                    if parser.discontinuities:
+                        self.monitor.log_event(
+                            self.session.channel_id,
+                            "discontinuity_detected",
+                            f"Detected {len(parser.discontinuities)} discontinuity markers"
+                        )
                 
                 self.monitor.log_event(
                     self.session.channel_id,

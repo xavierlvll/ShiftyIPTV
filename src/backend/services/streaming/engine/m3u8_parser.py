@@ -34,7 +34,6 @@ class M3U8Parser:
             self.is_master = True
             for line in lines:
                 if line.startswith("http") or line.startswith("/"):
-                    # For simplicity, we assume absolute URLs
                     self.playlists.append(self._resolve_url(line.strip()))
         else:
             self.is_master = False
