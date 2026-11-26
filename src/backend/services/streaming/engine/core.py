@@ -42,4 +42,9 @@ class StreamingEngine:
         """
         Handles an incoming HTTP request for a stream.
         """
+        session = await self.get_or_create_session_from_id(channel_id)
+        if not session:
+            return
+        
+        # Implementation for stream delivery will go here
         pass

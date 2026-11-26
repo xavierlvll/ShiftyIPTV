@@ -69,7 +69,7 @@ class HLSManager:
 
                 content = response.text
                 parser = M3UParser(content, base_url=self.media_playlist_url)
-                is_master, playlists, segments = parser.parse()
+                is_master, playlists, segments, media_sequence_number = parser.parse()
                 
                 if is_master:
                     if playlists and (not self.media_playlist_url or playlists[0] != self.media_playlist_url):
@@ -105,6 +105,9 @@ class HLSManager:
                             "discontinuity_detected",
                             f"Detected {len(parser.discontinuities)} discontinuity markers"
                         )
+
+                    if media_sequence_number is not None:
+                        self.tracker.update_sequence_number(media_sequence_number)
                 
                 self.monitor.log_event(
                     self.session.channel_id,
