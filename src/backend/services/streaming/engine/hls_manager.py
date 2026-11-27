@@ -1,4 +1,4 @@
-from src.backend.services.streaming.engine.m3u8_parser import M3UParser
+from src.backend.services.streaming.engine.m3u8_parser import M3U8Parser
 from src.backend.services.streaming.engine.segment_tracker import SegmentTracker
 import httpx
 import asyncio
@@ -10,7 +10,7 @@ from src.backend.services.streaming.engine.monitor import StreamMonitor
 logger = logging.getLogger(__name__)
 
 class HLSManager:
-    """Manets the HLS playlist and segments for a stream session."""
+    """Manages the HLS playlist and segments for a stream session."""
     def __init__(self, session: StreamSession, monitor: StreamMonitor):
         self.session = session
         self.monitor = monitor
@@ -23,6 +23,7 @@ class HLSManager:
     async def start(self, initial_url: str):
         """Starts the HLS management loop."""
         self.media_playlist_url = initial_url
+        self.session.stream_url = initial_url
         self._is_running = True
         self._task = asyncio.create_task(self._run_loop())
 
@@ -41,24 +42,42 @@ class HLSManager:
         while self._is_running:
             try:
                 await self._refresh_playlist()
+                # Reset failure count on successful refresh
+                self.session.failure_count = 0
             except Exception as e:
+                self.session.failure_count += 1
                 self.monitor.log_event(
                     self.session.channel_id, 
                     "playlist_error", 
-                    f"Error refreshing playlist: {str(e)}"
+                    f"Error refreshing playlist (failure #{self.session.failure_count}): {str(e)}"
                 )
             
-            # Wait for next refresh interval
-            await asyncio.sleep(10) 
+            # Exponential backoff: 10s, 20s, 40s, 80s, up to 300s (5 mins)
+            delay = min(10 * (2 ** (self.session.failure_count - 1) if self.session.failure_count > 0 else 0), 300)
+            if self.session.failure_count > 0:
+                self.monitor.log_event(
+                    self.session.channel_id,
+                    "retry_scheduled",
+                    f"Retrying in {delay} seconds due to failure"
+                )
+            
+            await asyncio.sleep(delay)
 
     async def _refresh_playlist(self):
         """Fetches and parses the current playlist to detect changes."""
         if not self.media_playlist_url:
             return
 
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
             try:
                 response = await client.get(self.media_playlist_url)
+                if str(response.url) != self.media_playlist_url:
+                    self.media_playlist_url = str(response.url)
+                    self.monitor.log_event(
+                        self.session.channel_id,
+                        "playlist_update",
+                        f"Playlist URL redirected to: {self.media_playlist_url}"
+                    )
                 if response.status_code != 200:
                     self.monitor.log_event(
                         self.session.channel_id, 
@@ -68,12 +87,14 @@ class HLSManager:
                     return
 
                 content = response.text
-                parser = M3UParser(content, base_url=self.media_playlist_url)
+                parser = M3U8Parser(content, base_url=self.media_playlist_url)
                 is_master, playlists, segments, media_sequence_number = parser.parse()
                 
                 if is_master:
                     if playlists and (not self.media_playlist_url or playlists[0] != self.media_playlist_url):
                         self.media_playlist_url = playlists[0]
+                        self.session.stream_url = playlists[0]
+
                         self.monitor.log_event(
                             self.session.channel_id,
                             "playlist_update",
@@ -81,6 +102,8 @@ class HLSManager:
                         )
                 else:
                     if segments and (not self.media_playlist_url or segments[0] != self.media_playlist_url):
+                        self.session.stream_url = segments[0]
+
                         self.media_playlist_url = segments[0]
                         self.monitor.log_event(
                             self.session.channel_id,

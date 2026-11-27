@@ -33,3 +33,17 @@ class Channel(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     provider = relationship("Provider", back_populates="channels")
+    programs = relationship("Program", back_populates="channel", cascade="all, delete-orphan")
+
+class Program(Base):
+    __tablename__ = "programs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    channel_id = Column(Integer, ForeignKey("channels.id"), nullable=False)
+    title = Column(String, nullable=False)
+    start_time = Column(DateTime, nullable=False)
+    end_name = Column(DateTime, nullable=True) # Using end_time in implementation
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    channel = relationship("Channel", back_populates="programs")

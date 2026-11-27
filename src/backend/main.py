@@ -5,17 +5,23 @@ from src.backend.api.providers import router as provider_router
 from src.backend.api.channels import router as channel_router
 from src.backend.api.stream import router as stream_router
 from src.backend.api.monitoring import router as monitoring_router
+from src.backend.api.epg import router as epg_router
+from src.backend.services.streaming.engine.core import StreamingEngine
 
 app = FastAPI(title="SHiFTyIPTV")
 
 @app.on_event("startup")
 async def startup_event():
     await init_db()
+    app.state.monitor = StreamMonitor()
+    app.state.streaming_engine = StreamingEngine()
+    # The engine is initialized and ready to manage sessions.
 
 app.include_router(provider_router, prefix="/api/providers", tags=["providers"])
 app.include_router(channel_router, prefix="/api/channels", tags=["channels"])
 app.include_router(stream_router, prefix="/api/stream", tags=["stream"])
 app.include_router(monitoring_router, prefix="/api/monitoring", tags=["monitoring"])
+app.include_router(epg_router, prefix="/api/epg", tags=["epg"])
 
 @app.get("/")
 async def root():

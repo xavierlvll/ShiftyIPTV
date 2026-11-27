@@ -5,8 +5,10 @@ from src.backend.models.models import Channel, Provider
 from typing import List, Optional
 
 class ChannelService:
-    def __current_id(self, db: AsyncSession, channel_id: int) -> Channel:
-        pass # Placeholder
+    async def get_channel_by_id(self, channel_id: int) -> Optional[Channel]:
+        """Retrieves a channel by its ID."""
+        result = await self.db.execute(select(Channel).where(Channel.id == channel_id))
+        return result.scalar_one_or_none()
 
     def __init__(self, db: AsyncSession):
         self.db = db

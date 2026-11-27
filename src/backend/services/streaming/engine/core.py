@@ -23,11 +23,16 @@ class StreamingEngine:
         self.active_sessions: Dict[int, StreamSession] = {}
         self._lock = asyncio.Lock()
 
-    async def get_or_create_session(self, channel: Channel) -> StreamSession:
+    async def get_or_create_for_channel(self, channel_id: int, channel_service: Any) -> Optional[StreamSession]:
+        """Retrieves or creates a stream session for a given channel ID."""
         async with self._lock:
-            if channel.id in self.active_sessions:
-                return self.active_sessions[channel.id]
+            if channel_id in self.active_sessions:
+                return self.active_sessions[channel_id]
             
+            channel = await channel_service.get_channel_by_id(channel_id)
+            if not channel:
+                return None
+                
             session = StreamSession(channel.id, channel.stream_url)
             self.active_sessions[channel.id] = session
             return session
@@ -38,13 +43,13 @@ class StreamingEngine:
                 self.active_sessions[channel_id].is_active = False
                 del self.active_sessions[channel_id]
 
-    async def handle_stream_request(self, channel_id: int, client_request: Any):
+    async def handle_stream_request(self, channel_id: int, client_request: Any, channel_service: Any):
         """
         Handles an incoming HTTP request for a stream.
         """
-        session = await self.get_or_create_session_from_id(channel_id)
+        session = await self.get_or_create_for_channel(channel_id, channel_service)
         if not session:
-            return
+            return None
         
         # Implementation for stream delivery will go here
-        pass
+        return session

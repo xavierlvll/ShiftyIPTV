@@ -50,9 +50,14 @@ async def stream_channel(
             yield b"Error: Channel not found or disabled"
             return
 
+        session = await engine.get_or_create_for_channel(channel_id, channel_service)
+        if not session:
+            yield b"Error: Failed to create stream session"
+            return
+
         async with httpx.AsyncClient(timeout=None) as client:
             try:
-                async with client.stream("GET", channel.stream_url) as upstream_response:
+                async with client.stream("GET", session.stream_url) as upstream_response:
                     if upstream_response.status_code != 200:
                         yield f"Error: Upstream returned {upstream_response.status_code}".encode()
                         return
@@ -62,5 +67,5 @@ async def stream_channel(
             except Exception as e:
                 yield f"stream_connection_failed: {str(e)}".encode()
                 return
-
+    
     return StreamingResponse(stream_generator(), media_type="application/octet-stream")

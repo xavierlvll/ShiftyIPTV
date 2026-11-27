@@ -2,8 +2,8 @@
 
 ## Phase 1: Exploration & Research
 - [x] Inspect the repository (Done)
-- [ ] Research HLS and IPTV streaming architecture
-- [ ] Investigate Pluto TV's HSL behavior (Ads, transitions, etc.)
+- [x] Research HLS and IPTV streaming architecture
+- [x] Investigate Pluto TV's HSL behavior (Ads, transitions, etc.)
 
 ## Phase 2: Design & Architecture
 - [ ] Define application architecture (Backend, Streaming Engine, Dashboard, Database)

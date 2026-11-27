@@ -53,21 +53,3 @@ class M3U8Parser:
         self.is_parsed = True
         return self.is_master, self.playlists, self.segments, media_sequence_number
 
-        lines = self.content.splitlines()
-        
-        # Check if it's a master playlist
-        if any("#EXT-X-STREAM-INF" in line for line in lines):
-            self.is_master = True
-            for line in lines:
-                if line.startswith("http") or line.startswith("/"):
-                    self.playlists.append(self._resolve_url(line.strip()))
-        else:
-            self.is_master = False
-            for i, line in enumerate(lines):
-                if "#EXT-X-DISCONTINUITY" in line:
-                    self.discontinuities.append(i)
-                if line.startswith("http") or line.startswith("/"):
-                    self.segments.append(self._resolve_url(line.strip()))
-        
-        self.is_parsed = True
-        return self.is_master, self.playlists, self.segments
